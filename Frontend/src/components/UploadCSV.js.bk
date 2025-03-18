@@ -1,0 +1,58 @@
+import React, { useState } from "react";
+import "../styles/UploadCSV.css";
+
+const UploadCSV = ({ onUpload }) => {
+    const [file, setFile] = useState(null);
+    const [error, setError] = useState("");
+
+    const handleFileChange = (event) => {
+        const selectedFile = event.target.files[0];
+        if (selectedFile) {
+            const fileType = selectedFile.name.split(".").pop().toLowerCase();
+            if (["csv", "xlsx", "xls"].includes(fileType)) {
+                setFile(selectedFile);
+                setError("");
+            } else {
+                setError("Invalid file format. Only CSV, XLSX, and XLS are allowed.");
+            }
+        }
+    };
+
+    const handleUpload = async () => {
+        if (!file) {
+            setError("Please select a file.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const response = await fetch("http://localhost:5000/api/upload", {
+                method: "POST",
+                body: formData,
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                alert("File uploaded successfully!");
+                onUpload(data);
+            } else {
+                setError(data.message || "File upload failed.");
+            }
+        } catch (err) {
+            setError("An error occurred. Please try again.");
+        }
+    };
+
+    return (
+        <div className="upload-container">
+            <h2>Upload CSV File</h2>
+            <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFileChange} />
+            {error && <p>{error}</p>}
+            <button onClick={handleUpload}>Upload</button>
+        </div>
+    );
+};
+
+export default UploadCSV;
